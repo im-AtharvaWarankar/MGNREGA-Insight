@@ -11,7 +11,7 @@ The project aims to promote data-driven transparency and citizen awareness about
 🌟 Key Features
 
 📊 District Performance Dashboard:
-Displays detailed metrics for each district — including work demand, person-days generated, fund utilization, and employment trends.
+Displays detailed metrics for each district -including work demand, person-days generated, fund utilization, and employment trends.
 
 🌐 Data Visualization:
 Interactive charts and graphs that help citizens quickly interpret government data.
