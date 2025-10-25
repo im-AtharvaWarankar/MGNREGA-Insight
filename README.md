@@ -4,7 +4,7 @@ Empowering citizens with data transparency for rural employment initiatives
 
 MGNREGA Insight (CivicView Dashboard) is a public web platform designed to make MGNREGA (Mahatma Gandhi National Rural Employment Guarantee Act) data more understandable and accessible to every citizen.
 
-While the Government of India provides MGNREGA statistics through APIs, the data is often raw and difficult to interpret. This platform simplifies that — allowing users to explore district-level performance metrics, visualized insights, and key comparisons in an intuitive interface.
+While the Government of India provides MGNREGA statistics through APIs, the data is often raw and difficult to interpret. This platform simplifies that, allowing users to explore district-level performance metrics, visualized insights, and key comparisons in an intuitive interface.
 
 The project aims to promote data-driven transparency and citizen awareness about rural employment schemes.
 
