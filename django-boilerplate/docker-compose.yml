@@ -1,0 +1,98 @@
+name: nrega
+
+services:
+  db:
+    container_name: 'nrega-db'
+    image: postgres:14-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: mgnrega_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - '5432:5432'
+    volumes:
+      - nrega-db-data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: 'nrega-backend'
+    user: '${UID}:${GID}'
+    environment:
+      ENV: dev
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/opt/:Z
+    ports:
+      - 8000:8000
+    depends_on:
+      - db
+      - redis
+
+  webserver:
+    container_name: nrega-webserver
+    image: public.ecr.aws/x4n4t1u0/nginx:latest
+    ports:
+      - '80:80'
+      - '443:443'
+    depends_on:
+      - backend
+      - redis
+      - celery
+    volumes:
+      - ./config/nginx/conf/:/etc/nginx/conf.d/
+      - ./config/nginx/letsencrypt/:/etc/letsencrypt/
+      - ./frontend/build:/var/www/html
+      # - ./config/certbot/www:/var/www/certbot/
+      # - ./config/certbot/conf/:/etc/nginx/ssl/
+
+  redis:
+    container_name: 'nrega-redis'
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - '6379:6379'
+    expose:
+      - 6379
+    volumes:
+      - nrega-redis-data:/data
+
+  celery:
+    container_name: 'nrega-celery'
+    build: .
+    command: celery -A src worker -l INFO -E -f /opt/logs/celery/worker.logs
+    volumes:
+      - .:/opt/
+    depends_on:
+      - redis
+      - backend
+
+  celery-beat:
+    container_name: 'nrega-celery-beat'
+    build: .
+    command: celery -A src beat -l INFO -f /opt/logs/celery/beat.logs
+    volumes:
+      - .:/opt/
+    depends_on:
+      - redis
+      - backend
+
+  flower:
+    container_name: 'nrega-flower'
+    build: .
+    command: celery -A src flower --port=5555
+    image: mher/flower:0.9.7
+    ports:
+      - 5555:5555
+    volumes:
+      - .:/opt/
+    depends_on:
+      - backend
+      - celery
+      - redis
+
+volumes:
+  nrega-redis-data:
+  nrega-db-data:

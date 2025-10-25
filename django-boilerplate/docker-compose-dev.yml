@@ -1,0 +1,92 @@
+name: nrega
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: 'nrega-backend'
+    user: '${UID}:${GID}'
+    environment:
+      ENV: dev
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/opt/:Z
+    ports:
+      - 8000:8000
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: postgres:14
+    container_name: 'nrega-db'
+    restart: always
+    user: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: nrega_db
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - 5432:5432
+    expose:
+      - 5432
+    volumes:
+      - nrega-db-data:/var/lib/postgresql/data
+
+  redis:
+    container_name: 'nrega-redis'
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - '6379:6379'
+    expose:
+      - 6379
+    volumes:
+      - nrega-redis-data:/data
+
+  celery:
+    container_name: 'nrega-celery'
+    build: .
+    command: celery -A src worker -l INFO -E -f /opt/logs/celery/worker.logs
+    volumes:
+      - .:/opt/
+    depends_on:
+      - redis
+      - backend
+      - db
+    environment:
+      - DJANGO_SETTINGS_MODULE=src.settings.dev
+
+  celery-beat:
+    container_name: 'nrega-celery-beat'
+    build: .
+    command: celery -A src beat -l INFO -f /opt/logs/celery/beat.logs
+    volumes:
+      - .:/opt/
+    depends_on:
+      - redis
+      - backend
+      - db
+    environment:
+      - DJANGO_SETTINGS_MODULE=src.settings.dev
+
+  flower:
+    container_name: 'nrega-flower'
+    build: .
+    command: celery -A src flower --port=5555
+    image: mher/flower:0.9.7
+    ports:
+      - 5555:5555
+    volumes:
+      - .:/opt/
+    depends_on:
+      - backend
+      - celery
+      - redis
+
+volumes:
+  nrega-db-data:
+  nrega-redis-data:
+
